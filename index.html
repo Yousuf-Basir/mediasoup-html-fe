@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Room</title>
+  <style>
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Dark Theme Colors */
+    :root {
+      --background-color: #1e1e2f;
+      --card-color: #2b2b3d;
+      --text-color: #ffffff;
+      --input-bg-color: #33334d;
+      --input-border-color: #444465;
+      --primary-color: #007bff;
+      --primary-hover-color: #0056b3;
+    }
+
+    /* Page Wrapper */
+    .wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: var(--background-color);
+      padding: 20px;
+    }
+
+    /* Card Style */
+    .card {
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+      background: var(--card-color);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    /* Heading */
+    .card h1 {
+      font-size: 1.8rem;
+      color: var(--text-color);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Input Fields */
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 1rem;
+      color: var(--text-color);
+      margin-bottom: 0.3rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: var(--input-bg-color);
+      border: 1px solid var(--input-border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      font-size: 1rem;
+    }
+
+    /* Join Button */
+    .join-btn {
+      display: inline-block;
+      width: 100%;
+      padding: 0.8rem;
+      background-color: var(--primary-color);
+      color: var(--text-color);
+      border: none;
+      border-radius: 4px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .join-btn:hover {
+      background-color: var(--primary-hover-color);
+    }
+
+    .or-text {
+        color: white;
+        margin: 10px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 480px) {
+      .card h1 {
+        font-size: 1.5rem;
+      }
+
+      .input-group input {
+        padding: 0.6rem;
+      }
+
+      .join-btn {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="card">
+    <h1>Join a Room</h1>
+
+    <!-- Room Name Input -->
+    <div class="input-group">
+      <label for="roomName">Room Name</label>
+      <input type="text" id="roomName" placeholder="Enter Room Name" required>
+    </div>
+
+    <!-- User Name Input -->
+    <!-- <div class="input-group">
+      <label for="userName">Username</label>
+      <input type="text" id="userName" placeholder="Enter Your Username" required>
+    </div> -->
+
+    <!-- Join Button -->
+    <a href="#" class="join-btn" onclick="joinRoom()">Join</a>
+    <div class="or-text">or</div>
+    <a href="#" class="join-btn">Start Live Stream</a>
+  </div>
+</div>
+
+<script>
+  function joinRoom() {
+    const roomName = document.getElementById('roomName').value;
+    // const userName = document.getElementById('userName').value;
+
+    if (roomName) {
+      window.location.href = `/room?id=${encodeURIComponent(roomName)}`;
+    } else {
+      alert('Please enter a room name to join.');
+    }
+  }
+</script>
+
+</body>
+</html>
