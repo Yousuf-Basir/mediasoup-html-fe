@@ -3,7 +3,7 @@ import { mediasoupClientManager } from "./managers/mediasoupClientManager";
 
 document.addEventListener('DOMContentLoaded', () => {
   const mediaManager = new MediaManager();
-  const client = new mediasoupClientManager(mediaManager);
+  const mediasoupManager = new mediasoupClientManager(mediaManager);
 
   // UI Controls
   const muteAudioButton = document.getElementById('muteAudio');
@@ -35,5 +35,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   leaveButton.addEventListener('click', () => {
     window.location.href = '/'; // Or your preferred leave room behavior
+  });
+
+
+  // Recording UI events
+  document.getElementById('startRecordButton').addEventListener('click', async () => {
+    try {
+      await mediasoupManager.startRecording('both');
+      // Update UI to show recording status
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      // Show error message to user
+    }
+  });
+  
+  document.getElementById('stopRecordButton').addEventListener('click', async () => {
+    try {
+      await mediasoupManager.stopRecording('both');
+      // Update UI to show recording stopped
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      // Show error message to user
+    }
   });
 });

@@ -14,6 +14,7 @@ export class mediasoupClientManager {
     this.videoProducer = null;
     this.consumingTransports = [];
     this.rtpCapabilities = null;
+    this.activeRecordings = new Map(); // Track active recordings by producer ID
 
     this.setupSocketListeners();
   }
@@ -31,6 +32,21 @@ export class mediasoupClientManager {
 
     this.socket.on('producer-closed', ({ remoteProducerId }) => {
       this.handleProducerClosed(remoteProducerId);
+    });
+
+    // Add recording status listeners
+    this.socket.on('recording-started', ({ producerId, fileName }) => {
+      this.activeRecordings.set(producerId, fileName);
+      this.notifyRecordingStatus('started', producerId, fileName);
+    });
+
+    this.socket.on('recording-stopped', ({ producerId, filePath }) => {
+      this.activeRecordings.delete(producerId);
+      this.notifyRecordingStatus('stopped', producerId, filePath);
+    });
+
+    this.socket.on('recording-error', ({ producerId, error }) => {
+      this.notifyRecordingStatus('error', producerId, error);
     });
   }
 
@@ -202,7 +218,7 @@ export class mediasoupClientManager {
       const newElem = document.createElement('div');
       newElem.setAttribute('id', `td-${remoteProducerId}`);
       // audio-container is hidden from css
-      newElem.setAttribute('class', params.kind === 'audio' ? 'audio-container': 'video-container');
+      newElem.setAttribute('class', params.kind === 'audio' ? 'audio-container' : 'video-container');
 
       const mediaElem = params.kind === 'audio'
         ? `<audio id="${remoteProducerId}" autoplay></audio>`
@@ -239,4 +255,95 @@ export class mediasoupClientManager {
       if (elem) elem.remove();
     }
   }
+
+  // Add recording control methods
+  async startRecording(type = 'both') {
+    try {
+      if (type === 'audio' || type === 'both') {
+        await this.startStreamRecording(this.audioProducer);
+      }
+      if (type === 'video' || type === 'both') {
+        await this.startStreamRecording(this.videoProducer);
+      }
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      throw error;
+    }
+  }
+
+  async stopRecording(type = 'both') {
+    try {
+      if (type === 'audio' || type === 'both') {
+        await this.stopStreamRecording(this.audioProducer);
+      }
+      if (type === 'video' || type === 'both') {
+        await this.stopStreamRecording(this.videoProducer);
+      }
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      throw error;
+    }
+  }
+
+  async startStreamRecording(producer) {
+    if (!producer) {
+      throw new Error('No producer available for recording');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.socket.emit('startRecording', { producerId: producer.id }, (response) => {
+        if (response.error) {
+          reject(new Error(response.error));
+        } else {
+          this.activeRecordings.set(producer.id, response.fileName);
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  async stopStreamRecording(producer) {
+    if (!producer) {
+      throw new Error('No producer available for recording');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.socket.emit('stopRecording', { producerId: producer.id }, (response) => {
+        if (response.error) {
+          reject(new Error(response.error));
+        } else {
+          this.activeRecordings.delete(producer.id);
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  isRecording(type = 'both') {
+    if (type === 'audio') {
+      return this.audioProducer && this.activeRecordings.has(this.audioProducer.id);
+    }
+    if (type === 'video') {
+      return this.videoProducer && this.activeRecordings.has(this.videoProducer.id);
+    }
+    return (
+      (this.audioProducer && this.activeRecordings.has(this.audioProducer.id)) ||
+      (this.videoProducer && this.activeRecordings.has(this.videoProducer.id))
+    );
+  }
+
+  notifyRecordingStatus(status, producerId, details) {
+    // Emit custom event for UI updates
+    const event = new CustomEvent('recordingStatusChange', {
+      detail: {
+        status,
+        producerId,
+        details,
+        isAudio: this.audioProducer?.id === producerId,
+        isVideo: this.videoProducer?.id === producerId
+      }
+    });
+    window.dispatchEvent(event);
+  }
+
 }
