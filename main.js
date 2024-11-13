@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show error message to user
     }
   });
-  
+
   document.getElementById('stopRecordButton').addEventListener('click', async () => {
     try {
       await mediasoupManager.stopRecording('both');
