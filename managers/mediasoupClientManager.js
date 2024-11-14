@@ -259,13 +259,11 @@ export class mediasoupClientManager {
   // Add recording control methods
   async startRecording(type = 'both') {
     try {
-      if (type === 'both') {
-        if (!this.audioProducer || !this.videoProducer) {
-          throw new Error('Both audio and video producers must be available for combined recording');
-        }
-        await this.startCombinedStreamRecording(this.audioProducer, this.videoProducer);
-      } else {
-        throw new Error('Single stream recording is no longer supported. Use combined recording instead.');
+      if (type === 'audio' || type === 'both') {
+        await this.startStreamRecording(this.audioProducer);
+      }
+      if (type === 'video' || type === 'both') {
+        await this.startStreamRecording(this.videoProducer);
       }
     } catch (error) {
       console.error('Failed to start recording:', error);
@@ -275,13 +273,11 @@ export class mediasoupClientManager {
 
   async stopRecording(type = 'both') {
     try {
-      if (type === 'both') {
-        if (!this.audioProducer || !this.videoProducer) {
-          throw new Error('Both audio and video producers must be available to stop combined recording');
-        }
-        await this.stopCombinedStreamRecording(this.audioProducer, this.videoProducer);
-      } else {
-        throw new Error('Single stream recording is no longer supported. Use combined recording instead.');
+      if (type === 'audio' || type === 'both') {
+        await this.stopStreamRecording(this.audioProducer);
+      }
+      if (type === 'video' || type === 'both') {
+        await this.stopStreamRecording(this.videoProducer);
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
@@ -289,61 +285,51 @@ export class mediasoupClientManager {
     }
   }
 
-  // Helper method to check if a recording is active
-  isRecording(audioProducer, videoProducer) {
-    if (!audioProducer || !videoProducer) return false;
-    const recordingKey = `${audioProducer.id}_${videoProducer.id}`;
-    return this.activeRecordings.has(recordingKey);
-  }
-
-  // Helper method to get the filename of an active recording
-  getRecordingFileName(audioProducer, videoProducer) {
-    if (!audioProducer || !videoProducer) return null;
-    const recordingKey = `${audioProducer.id}_${videoProducer.id}`;
-    return this.activeRecordings.get(recordingKey);
-  }
-
-  async startCombinedStreamRecording(audioProducer, videoProducer) {
-    if (!audioProducer || !videoProducer) {
-      throw new Error('Both audio and video producers are required for combined recording');
+  async startStreamRecording(producer) {
+    if (!producer) {
+      throw new Error('No producer available for recording');
     }
 
     return new Promise((resolve, reject) => {
-      this.socket.emit('startRecording', {
-        audioProducerId: audioProducer.id,
-        videoProducerId: videoProducer.id
-      }, (response) => {
+      this.socket.emit('startRecording', { producerId: producer.id }, (response) => {
         if (response.error) {
           reject(new Error(response.error));
         } else {
-          // Store the recording with a combined key
-          const recordingKey = `${audioProducer.id}_${videoProducer.id}`;
-          this.activeRecordings.set(recordingKey, response.fileName);
+          this.activeRecordings.set(producer.id, response.fileName);
           resolve(response);
         }
       });
     });
   }
 
-  async stopCombinedStreamRecording(audioProducer, videoProducer) {
-    if (!audioProducer || !videoProducer) {
-      throw new Error('Both audio and video producers are required to stop combined recording');
+  async stopStreamRecording(producer) {
+    if (!producer) {
+      throw new Error('No producer available for recording');
     }
 
     return new Promise((resolve, reject) => {
-      this.socket.emit('stopRecording', {
-        audioProducerId: audioProducer.id,
-        videoProducerId: videoProducer.id
-      }, (response) => {
+      this.socket.emit('stopRecording', { producerId: producer.id }, (response) => {
         if (response.error) {
           reject(new Error(response.error));
         } else {
-          const recordingKey = `${audioProducer.id}_${videoProducer.id}`;
-          this.activeRecordings.delete(recordingKey);
+          this.activeRecordings.delete(producer.id);
           resolve(response);
         }
       });
     });
+  }
+
+  isRecording(type = 'both') {
+    if (type === 'audio') {
+      return this.audioProducer && this.activeRecordings.has(this.audioProducer.id);
+    }
+    if (type === 'video') {
+      return this.videoProducer && this.activeRecordings.has(this.videoProducer.id);
+    }
+    return (
+      (this.audioProducer && this.activeRecordings.has(this.audioProducer.id)) ||
+      (this.videoProducer && this.activeRecordings.has(this.videoProducer.id))
+    );
   }
 
   notifyRecordingStatus(status, producerId, details) {
