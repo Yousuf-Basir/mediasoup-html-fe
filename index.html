@@ -136,7 +136,7 @@
     <!-- Join Button -->
     <a href="#" class="join-btn" onclick="joinRoom()">Join</a>
     <div class="or-text">or</div>
-    <a href="#" class="join-btn">Start Live Stream</a>
+    <a href="#" class="join-btn" onclick="startLiveStream()">Start Live Stream</a>
   </div>
 </div>
 
@@ -147,6 +147,17 @@
 
     if (roomName) {
       window.location.href = `/room?id=${encodeURIComponent(roomName)}`;
+    } else {
+      alert('Please enter a room name to join.');
+    }
+  }
+
+  function startLiveStream() {
+    const roomName = document.getElementById('roomName').value;
+    // const userName = document.getElementById('userName').value;
+
+    if (roomName) {
+      window.location.href = `/stream?id=${encodeURIComponent(roomName)}`;
     } else {
       alert('Please enter a room name to join.');
     }
